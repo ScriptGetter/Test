@@ -1,0 +1,124 @@
+-- Make sure you have Orion set up in ReplicatedStorage
+
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/Source.lua"))()
+
+-- Create the main window
+local Window = OrionLib:MakeWindow({
+    Name = "Bunker Survival UI",  -- Window title
+    HidePremium = false,          -- Hide premium UI if you want
+    SaveConfig = true,            -- Save UI layout
+    ConfigFolder = "OrionBunkerConfig",  -- Folder name for config
+})
+
+-- Label to show player status
+local statusLabel = Window:MakeLabel({
+    Text = "Welcome to the Bunker Survival!",
+    TextSize = 20,
+    TextColor = Color3.fromRGB(255, 255, 255),
+})
+
+-- Dropdown with different worlds to teleport to
+local worlds = {
+    {Name = "World 1", PlaceId = 123456789},  -- Replace with actual PlaceId of World 1
+    {Name = "World 2", PlaceId = 987654321},  -- Replace with actual PlaceId of World 2
+    {Name = "World 3", PlaceId = 456789123},  -- Replace with actual PlaceId of World 3
+    {Name = "World 4", PlaceId = 321654987},  -- Replace with actual PlaceId of World 4
+    {Name = "World 5", PlaceId = 654321789},  -- Replace with actual PlaceId of World 5
+    {Name = "World 6", PlaceId = 987321654},  -- Replace with actual PlaceId of World 6
+}
+
+local worldNames = {}
+for _, world in pairs(worlds) do
+    table.insert(worldNames, world.Name)
+end
+
+local selectedWorld = nil
+
+local worldDropdown = Window:MakeDropdown({
+    Name = "Select World to Teleport",
+    Options = worldNames,
+    Callback = function(selected)
+        -- Find the PlaceId of the selected world
+        for _, world in pairs(worlds) do
+            if world.Name == selected then
+                selectedWorld = world
+                break
+            end
+        end
+        statusLabel.Text = "Selected world: " .. selected
+    end
+})
+
+-- Button to teleport the player
+local teleportButton = Window:MakeButton({
+    Name = "Teleport to Selected World",
+    Text = "Teleport",
+    Callback = function()
+        -- Check if the player has selected a world
+        if selectedWorld then
+            -- Ask for confirmation before teleporting
+            local confirmation = OrionLib:MakeConfirmation({
+                Title = "Teleport Confirmation",
+                Text = "Are you sure you want to teleport to " .. selectedWorld.Name .. "?",
+                Callback = function(confirm)
+                    if confirm then
+                        teleportToNewWorld(selectedWorld.PlaceId)
+                    else
+                        statusLabel.Text = "Teleportation canceled."
+                    end
+                end
+            })
+        else
+            statusLabel.Text = "Please select a world first."
+        end
+    end
+})
+
+-- Function to teleport the player to the selected world
+local function teleportToNewWorld(placeId)
+    local TeleportService = game:GetService("TeleportService")
+    local player = game.Players.LocalPlayer
+
+    -- Teleport the player to the new world
+    TeleportService:Teleport(placeId, player)
+    
+    -- Update the UI with the status
+    statusLabel.Text = "Teleporting to " .. selectedWorld.Name .. "..."
+end
+
+-- Toggle: Simple feature toggle (like enabling a bunker upgrade)
+local toggle = Window:MakeToggle({
+    Name = "Enable Bunker Upgrade",
+    CurrentValue = false,
+    Callback = function(value)
+        if value then
+            statusLabel.Text = "Bunker Upgrade Enabled"
+        else
+            statusLabel.Text = "Bunker Upgrade Disabled"
+        end
+    end
+})
+
+-- Slider: Adjusting volume or another parameter (e.g., hunger level)
+local slider = Window:MakeSlider({
+    Name = "Adjust Volume",
+    Min = 0,
+    Max = 100,
+    Default = 50,
+    Callback = function(value)
+        statusLabel.Text = "Volume set to " .. value
+    end
+})
+
+-- TextBox: Enter some text (e.g., player's name or custom message)
+local textBox = Window:MakeTextBox({
+    Name = "Enter Name",
+    Default = "Player1",
+    ClearTextOnFocus = false,
+    Callback = function(value)
+        statusLabel.Text = "You typed: " .. value
+    end
+})
+
+-- End the UI script (make sure to keep the script running for the UI)
+OrionLib:Init()
